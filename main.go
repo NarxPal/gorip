@@ -9,32 +9,36 @@ import (
 
 func main() {
 	searchTerm := os.Args[1]
-	filename := os.Args[2]
+	filenames := os.Args[2:]
 	fmt.Printf("Received input: %s\n", searchTerm)
 
-	fmt.Printf("Received input: %s\n", filename)
+	fmt.Printf("Received input: %s\n", filenames)
 
-	file, opnErr := os.Open(filename)
-	if opnErr != nil {
-		fmt.Printf("Error opening file: %v\n", opnErr)
-		return
-	}
-	defer file.Close()
+	for _, filename := range filenames {
 
-	scanner := bufio.NewScanner(file)
-
-	lineCount := 1
-
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.Contains(line, searchTerm) {
-			fmt.Printf("Line %v: %v \n", lineCount, line)
+		file, opnErr := os.Open(filename)
+		if opnErr != nil {
+			fmt.Printf("Error opening file: %v\n", opnErr)
+			continue
 		}
-		lineCount++
-	}
 
-	if scanErr := scanner.Err(); scanErr != nil {
-		fmt.Printf("Error scanning file: %v \n", scanErr)
+		scanner := bufio.NewScanner(file)
+
+		lineCount := 1
+
+		for scanner.Scan() {
+			line := scanner.Text()
+			if strings.Contains(line, searchTerm) {
+				fmt.Printf("Line %v: %v \n", lineCount, line)
+			}
+			lineCount++
+		}
+
+		if scanErr := scanner.Err(); scanErr != nil {
+			fmt.Printf("Error scanning file: %v \n", scanErr)
+		}
+
+		file.Close() // close file before moving over next iteration
 	}
 
 }
