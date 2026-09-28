@@ -41,6 +41,9 @@ func searchDirectory(path string, searchTerm string) {
 	}
 	for _, entry := range entries {
 		fullpath := filepath.Join(path, entry.Name())
+		if entry.Name() == ".git" {
+			continue
+		}
 		if entry.IsDir() {
 			searchDirectory(fullpath, searchTerm)
 		} else {
@@ -50,6 +53,7 @@ func searchDirectory(path string, searchTerm string) {
 }
 
 func search(path string, searchTerm string) {
+	fmt.Printf("path check karo: %v\n", path)
 	entries, err := os.Stat(path)
 	if err != nil {
 		fmt.Printf("Error from os .stat%v\n", err)
