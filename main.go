@@ -22,7 +22,7 @@ func searchFile(filename string, searchTerm string) {
 	for scanner.Scan() {
 		line := scanner.Text()
 		if strings.Contains(line, searchTerm) {
-			fmt.Printf("Line %v: %v \n", lineCount, line)
+			fmt.Printf("%v:%v: %v \n", filename, lineCount, line)
 		}
 		lineCount++
 	}
@@ -33,7 +33,7 @@ func searchFile(filename string, searchTerm string) {
 
 }
 
-func searchPath(path string, searchTerm string) {
+func searchDirectory(path string, searchTerm string) {
 	entries, err := os.ReadDir(path)
 	if err != nil {
 		fmt.Printf("Error read directory %v\n", err)
@@ -42,26 +42,25 @@ func searchPath(path string, searchTerm string) {
 	for _, entry := range entries {
 		fullpath := filepath.Join(path, entry.Name())
 		if entry.IsDir() {
-			searchPath(fullpath, searchTerm)
+			searchDirectory(fullpath, searchTerm)
 		} else {
 			searchFile(fullpath, searchTerm)
 		}
 	}
 }
 
-func listDirectory(path string) {
-	entries, err := os.ReadDir(path)
+func search(path string, searchTerm string) {
+	entries, err := os.Stat(path)
 	if err != nil {
-		fmt.Printf("Error read directory %v\n", err)
+		fmt.Printf("Error from os .stat%v\n", err)
 		return
 	}
-
-	for _, entry := range entries {
-		if entry.IsDir() {
-			fmt.Println(entry.Name(), "DIRECTORY")
-		} else {
-			fmt.Println(entry.Name(), "FILE")
-		}
+	if entries.IsDir() {
+		// if path is a directory
+		searchDirectory(path, searchTerm)
+	} else {
+		// else it's a file
+		searchFile(path, searchTerm)
 	}
 }
 
@@ -69,18 +68,10 @@ func main() {
 	if len(os.Args) < 3 {
 		return
 	}
-	path := os.Args[2]
-	// listDirectory(path)
+	path := os.Args[2:]
 	searchTerm := os.Args[1]
-	filenames := os.Args[2:]
-	searchPath(path, searchTerm)
-	fmt.Printf("Received input: %s\n", searchTerm)
-
-	fmt.Printf("Received input: %s\n", filenames)
-
-	for _, filename := range filenames {
-		searchFile(filename, searchTerm)
-
+	for _, p := range path {
+		search(p, searchTerm)
 	}
-
+	fmt.Printf("Received input: %s\n", searchTerm)
 }
