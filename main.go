@@ -7,9 +7,10 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 )
 
-func searchFile(filename string, searchTerm string, caseInsensitive *bool) {
+func searchFile(filename string, searchTerm string, caseInsensitive *bool, lineNum *bool) {
 	file, opnErr := os.Open(filename)
 	if opnErr != nil {
 		fmt.Printf("Error opening file: %v\n", opnErr)
@@ -33,7 +34,11 @@ func searchFile(filename string, searchTerm string, caseInsensitive *bool) {
 	for scanner.Scan() {
 		line := scanner.Text()
 		if re.MatchString(line) {
-			fmt.Printf("%v:%v: %v \n", filename, lineCount, line)
+			if *lineNum {
+				fmt.Printf("%v:%v: %v \n", filename, lineCount, line)
+			} else {
+				fmt.Printf("%v: %v \n", filename, line)
+			}
 		}
 		lineCount++
 	}
@@ -44,7 +49,7 @@ func searchFile(filename string, searchTerm string, caseInsensitive *bool) {
 
 }
 
-func searchDirectory(path string, searchTerm string, caseInsensitive *bool) {
+func searchDirectory(path string, searchTerm string, caseInsensitive *bool, lineNum *bool) {
 	entries, err := os.ReadDir(path)
 	if err != nil {
 		fmt.Printf("Error read directory %v\n", err)
@@ -52,18 +57,18 @@ func searchDirectory(path string, searchTerm string, caseInsensitive *bool) {
 	}
 	for _, entry := range entries {
 		fullpath := filepath.Join(path, entry.Name())
-		if entry.Name() == ".git" {
+		if strings.HasPrefix(entry.Name(), ".") {
 			continue
 		}
 		if entry.IsDir() {
-			searchDirectory(fullpath, searchTerm, caseInsensitive)
+			searchDirectory(fullpath, searchTerm, caseInsensitive, lineNum)
 		} else {
-			searchFile(fullpath, searchTerm, caseInsensitive)
+			searchFile(fullpath, searchTerm, caseInsensitive, lineNum)
 		}
 	}
 }
 
-func search(path string, searchTerm string, caseInsensitive *bool) {
+func search(path string, searchTerm string, caseInsensitive *bool, lineNum *bool) {
 	entries, err := os.Stat(path)
 	if err != nil {
 		fmt.Printf("Error from os .stat %v\n", err)
@@ -71,15 +76,16 @@ func search(path string, searchTerm string, caseInsensitive *bool) {
 	}
 	if entries.IsDir() {
 		// if path is a directory
-		searchDirectory(path, searchTerm, caseInsensitive)
+		searchDirectory(path, searchTerm, caseInsensitive, lineNum)
 	} else {
 		// else it's a file
-		searchFile(path, searchTerm, caseInsensitive)
+		searchFile(path, searchTerm, caseInsensitive, lineNum)
 	}
 }
 
 func main() {
 	caseInsensitive := flag.Bool("i", false, "case-insensitive")
+	lineNum := flag.Bool("n", false, "line-number")
 	flag.Parse()
 	args := flag.Args() // usin flags args and not os.args since we are using flag "-i" for case-insensitivity
 
@@ -89,6 +95,6 @@ func main() {
 	path := args[1:]
 	searchTerm := args[0]
 	for _, p := range path {
-		search(p, searchTerm, caseInsensitive)
+		search(p, searchTerm, caseInsensitive, lineNum)
 	}
 }
